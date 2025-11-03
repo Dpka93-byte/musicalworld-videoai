@@ -6,7 +6,8 @@ from moviepy.editor import (
 )
 from gtts import gTTS
 from pydub import AudioSegment
-import requests
+from imageio_ffmpeg import get_ffmpeg_exe
+AudioSegment.converter = get_ffmpeg_exe()
 
 IMG_W, IMG_H = 1080, 1920
 FPS = 24
