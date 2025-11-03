@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Story → Video (Shorts & Chapters)</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>AI Story → Video (Shorts & Chapters)</h1>
+
+      <details open>
+        <summary><strong>Single Short</strong></summary>
+        <form id="form-single">
+          <label>Deity / Theme</label>
+          <input name="deity" value="Murugan" />
+
+          <label>Narration language</label>
+          <select name="lang">
+            <option value="ta" selected>Tamil</option>
+            <option value="en">English</option>
+          </select>
+
+          <label>Target duration (seconds)</label>
+          <input type="number" name="duration" value="20" min="10" max="60" />
+
+          <label>Paste your story (Tamil or English)</label>
+          <textarea name="story" rows="8" placeholder="Paste your story..."></textarea>
+
+          <button type="submit">Create Single Video</button>
+        </form>
+      </details>
+
+      <details>
+        <summary><strong>Chapters (Batch)</strong> — paste JSON outline</summary>
+        <p>Use this format:</p>
+        <pre>{
+  "project": {
+    "title": "Your Book Title",
+    "lang": "ta",
+    "deity": "Murugan",
+    "chapters": [
+      {"title": "Chapter 1", "story": "...", "duration": 25},
+      {"title": "Chapter 2", "story": "...", "duration": 25}
+    ]
+  }
+}</pre>
+        <textarea id="batch-json" rows="12"></textarea>
+        <button id="btn-batch">Create Chapter Videos</button>
+        <div id="batch-result" class="hide"></div>
+      </details>
+
+      <div id="result" class="hide"></div>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
