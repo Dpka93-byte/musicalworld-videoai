@@ -1,6 +1,12 @@
 import os, io, textwrap, math, random, tempfile, base64, requests
-from typing import List, Dict
+from typing import List, Dict, Optional
+
 from PIL import Image, ImageDraw, ImageFont
+
+# --- Pillow 10+ compat (MoviePy may still use ANTIALIAS) ---
+if not hasattr(Image, "ANTIALIAS"):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
 from moviepy.editor import (
     ImageClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips
 )
@@ -34,7 +40,7 @@ def split_story_into_scenes(story: str, max_chars=140) -> List[str]:
 
 
 # ---------- Image generation ----------
-def generate_image(prompt: str, provider: str | None = None):
+def generate_image(prompt: str, provider: Optional[str] = None) -> Image.Image:
     provider = provider or os.getenv("IMAGE_PROVIDER", "openai")
 
     # Local placeholder (no API needed)
@@ -48,7 +54,7 @@ def generate_image(prompt: str, provider: str | None = None):
     if provider == "url":
         resp = requests.get(prompt, timeout=30)
         img = Image.open(io.BytesIO(resp.content)).convert("RGB")
-        return img.resize((IMG_W, IMG_H))
+        return img.resize((IMG_W, IMG_H), Image.ANTIALIAS)
 
     # Default: OpenAI Images (only if OPENAI_API_KEY is set)
     api_key = os.getenv("OPENAI_API_KEY")
@@ -67,7 +73,7 @@ def generate_image(prompt: str, provider: str | None = None):
     r.raise_for_status()
     b64 = r.json()["data"][0]["b64_json"]
     img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
-    return img.resize((IMG_W, IMG_H))
+    return img.resize((IMG_W, IMG_H), Image.ANTIALIAS)
 
 
 # ---------- Text-to-speech (no pydub) ----------
@@ -95,15 +101,15 @@ def add_text_overlay(pil_img: Image.Image, caption: str) -> Image.Image:
     cx, cy = IMG_W // 2, int(IMG_H * 0.82)
     # shadow
     for dx, dy in [(-2, -2), (2, 2), (-2, 2), (2, -2)]:
-        draw.multiline_text((cx + dx, cy + dy), caption, anchor="mm", align="center",
-                            fill=(0, 0, 0), font=font, spacing=6)
+        draw.multiline_text((cx + dx, cy + dy), caption, anchor="mm",
+                            align="center", fill=(0, 0, 0), font=font, spacing=6)
     draw.multiline_text((cx, cy), caption, anchor="mm", align="center",
                         fill=(255, 255, 255), font=font, spacing=6)
     return img
 
 
 # ---------- BGM ----------
-def pick_bgm_path() -> str | None:
+def pick_bgm_path() -> Optional[str]:
     """Return path to a random BGM file if available."""
     bgm_dir = os.path.join("assets", "bgm")
     if not os.path.isdir(bgm_dir):
@@ -164,7 +170,6 @@ def build_video_from_story(
         final.write_videofile(out_path, fps=FPS, codec="libx264", audio_codec="aac")
         return {"ok": True, "out_path": out_path}
 
-        # Cleanup temp voice file (Render will auto-clean on container restart; optional)
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
